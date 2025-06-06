@@ -14,16 +14,17 @@ namespace UsersService.Services
             _options = options.Value;
         }
 
-        public async Task<Cassandra.ISession> GetSessionAsync()
+        public Cassandra.ISession GetSession()
         {
-            if (_session is null)
+            if (_session == null)
             {
+                // Aquí aseguramos que _options.SecureConnectBundlePath apunte al ZIP correcto
                 var cluster = Cluster.Builder()
-                    .AddContactPoints(_options.ContactPoints)
-                    .WithPort(_options.Port)
+                    .WithCloudSecureConnectionBundle(_options.SecureConnectBundlePath)
+                    .WithCredentials(_options.ClientId, _options.ClientSecret)
                     .Build();
 
-                _session = await cluster.ConnectAsync(_options.Keyspace);
+                _session = cluster.Connect(_options.Keyspace);
             }
 
             return _session;
