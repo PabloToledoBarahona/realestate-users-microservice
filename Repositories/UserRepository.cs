@@ -63,18 +63,18 @@ namespace UsersService.Repositories
 
                     return new User
                     {
-                        IdUser      = row.GetValue<Guid>("id_user"),
-                        FirstName   = row.GetValue<string>("first_name"),
-                        LastName    = row.GetValue<string>("last_name"),
-                        Email       = row.GetValue<string>("email"),
-                        PasswordHash= row.GetValue<string>("password_hash"),
+                        IdUser = row.GetValue<Guid>("id_user"),
+                        FirstName = row.GetValue<string>("first_name"),
+                        LastName = row.GetValue<string>("last_name"),
+                        Email = row.GetValue<string>("email"),
+                        PasswordHash = row.GetValue<string>("password_hash"),
                         PhoneNumber = row.GetValue<string>("phone_number"),
                         DateOfBirth = birthDate,
-                        Gender      = row.GetValue<string>("gender"),
-                        Country     = row.GetValue<string>("country"),
-                        City        = row.GetValue<string>("city"),
-                        CreatedAt   = row.GetValue<DateTime>("created_at"),
-                        UpdatedAt   = row.GetValue<DateTime>("updated_at")
+                        Gender = row.GetValue<string>("gender"),
+                        Country = row.GetValue<string>("country"),
+                        City = row.GetValue<string>("city"),
+                        CreatedAt = row.GetValue<DateTime>("created_at"),
+                        UpdatedAt = row.GetValue<DateTime>("updated_at")
                     };
                 }
             }
@@ -96,19 +96,29 @@ namespace UsersService.Repositories
 
             return new User
             {
-                IdUser      = row.GetValue<Guid>("id_user"),
-                FirstName   = row.GetValue<string>("first_name"),
-                LastName    = row.GetValue<string>("last_name"),
-                Email       = row.GetValue<string>("email"),
-                PasswordHash= row.GetValue<string>("password_hash"),
+                IdUser = row.GetValue<Guid>("id_user"),
+                FirstName = row.GetValue<string>("first_name"),
+                LastName = row.GetValue<string>("last_name"),
+                Email = row.GetValue<string>("email"),
+                PasswordHash = row.GetValue<string>("password_hash"),
                 PhoneNumber = row.GetValue<string>("phone_number"),
                 DateOfBirth = birthDate,
-                Gender      = row.GetValue<string>("gender"),
-                Country     = row.GetValue<string>("country"),
-                City        = row.GetValue<string>("city"),
-                CreatedAt   = row.GetValue<DateTime>("created_at"),
-                UpdatedAt   = row.GetValue<DateTime>("updated_at")
+                Gender = row.GetValue<string>("gender"),
+                Country = row.GetValue<string>("country"),
+                City = row.GetValue<string>("city"),
+                CreatedAt = row.GetValue<DateTime>("created_at"),
+                UpdatedAt = row.GetValue<DateTime>("updated_at")
             };
         }
+
+        public async Task<string?> GetEmailByIdAsync(Guid id)
+        {
+            var session = _sessionFactory.GetSession();
+            var stmt = session.Prepare("SELECT email FROM users_by_id WHERE id_user = ?");
+            var result = await session.ExecuteAsync(stmt.Bind(id));
+            var row = result.FirstOrDefault();
+            return row?.GetValue<string>("email");
+        }
+
     }
 }
