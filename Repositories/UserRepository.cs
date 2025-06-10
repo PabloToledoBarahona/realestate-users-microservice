@@ -15,7 +15,7 @@ namespace UsersService.Repositories
 
         public async Task CreateAsync(User user)
         {
-            // Llamamos a GetSession(), no a GetSessionAsync()
+            // Llamamos a GetSession()
             var session = _sessionFactory.GetSession();
 
             var stmt = session.Prepare(@"
@@ -51,8 +51,6 @@ namespace UsersService.Repositories
         {
             var session = _sessionFactory.GetSession();
 
-            // Si tu tabla es grande, idealmente harías SELECT con WHERE email = ? (si exists índice secundario o materialized view).
-            // Por simplicidad, aquí iteramos todas las filas:
             var rs = await session.ExecuteAsync(new SimpleStatement("SELECT * FROM users_by_id"));
             foreach (var row in rs)
             {
@@ -63,18 +61,18 @@ namespace UsersService.Repositories
 
                     return new User
                     {
-                        IdUser      = row.GetValue<Guid>("id_user"),
-                        FirstName   = row.GetValue<string>("first_name"),
-                        LastName    = row.GetValue<string>("last_name"),
-                        Email       = row.GetValue<string>("email"),
-                        PasswordHash= row.GetValue<string>("password_hash"),
+                        IdUser = row.GetValue<Guid>("id_user"),
+                        FirstName = row.GetValue<string>("first_name"),
+                        LastName = row.GetValue<string>("last_name"),
+                        Email = row.GetValue<string>("email"),
+                        PasswordHash = row.GetValue<string>("password_hash"),
                         PhoneNumber = row.GetValue<string>("phone_number"),
                         DateOfBirth = birthDate,
-                        Gender      = row.GetValue<string>("gender"),
-                        Country     = row.GetValue<string>("country"),
-                        City        = row.GetValue<string>("city"),
-                        CreatedAt   = row.GetValue<DateTime>("created_at"),
-                        UpdatedAt   = row.GetValue<DateTime>("updated_at")
+                        Gender = row.GetValue<string>("gender"),
+                        Country = row.GetValue<string>("country"),
+                        City = row.GetValue<string>("city"),
+                        CreatedAt = row.GetValue<DateTime>("created_at"),
+                        UpdatedAt = row.GetValue<DateTime>("updated_at")
                     };
                 }
             }
@@ -96,19 +94,51 @@ namespace UsersService.Repositories
 
             return new User
             {
-                IdUser      = row.GetValue<Guid>("id_user"),
-                FirstName   = row.GetValue<string>("first_name"),
-                LastName    = row.GetValue<string>("last_name"),
-                Email       = row.GetValue<string>("email"),
-                PasswordHash= row.GetValue<string>("password_hash"),
+                IdUser = row.GetValue<Guid>("id_user"),
+                FirstName = row.GetValue<string>("first_name"),
+                LastName = row.GetValue<string>("last_name"),
+                Email = row.GetValue<string>("email"),
+                PasswordHash = row.GetValue<string>("password_hash"),
                 PhoneNumber = row.GetValue<string>("phone_number"),
                 DateOfBirth = birthDate,
-                Gender      = row.GetValue<string>("gender"),
-                Country     = row.GetValue<string>("country"),
-                City        = row.GetValue<string>("city"),
-                CreatedAt   = row.GetValue<DateTime>("created_at"),
-                UpdatedAt   = row.GetValue<DateTime>("updated_at")
+                Gender = row.GetValue<string>("gender"),
+                Country = row.GetValue<string>("country"),
+                City = row.GetValue<string>("city"),
+                CreatedAt = row.GetValue<DateTime>("created_at"),
+                UpdatedAt = row.GetValue<DateTime>("updated_at")
             };
+        }
+
+        public async Task UpdateAsync(User user)
+        {
+            var session = _sessionFactory.GetSession();
+
+            var cassandraDate = new LocalDate(user.DateOfBirth.Year, user.DateOfBirth.Month, user.DateOfBirth.Day);
+
+            var stmt = session.Prepare(@"
+        UPDATE users_by_id SET 
+            first_name = ?, 
+            last_name = ?, 
+            phone_number = ?, 
+            gender = ?, 
+            country = ?, 
+            city = ?, 
+            updated_at = ?
+        WHERE id_user = ?
+    ");
+
+            var bound = stmt.Bind(
+                user.FirstName,
+                user.LastName,
+                user.PhoneNumber,
+                user.Gender,
+                user.Country,
+                user.City,
+                user.UpdatedAt,
+                user.IdUser
+            );
+
+            await session.ExecuteAsync(bound);
         }
     }
 }
