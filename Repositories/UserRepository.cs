@@ -15,7 +15,7 @@ namespace UsersService.Repositories
 
         public async Task CreateAsync(User user)
         {
-            // Llamamos a GetSession(), no a GetSessionAsync()
+            // Llamamos a GetSession()
             var session = _sessionFactory.GetSession();
 
             var stmt = session.Prepare(@"
@@ -51,8 +51,6 @@ namespace UsersService.Repositories
         {
             var session = _sessionFactory.GetSession();
 
-            // Si tu tabla es grande, idealmente harías SELECT con WHERE email = ? (si exists índice secundario o materialized view).
-            // Por simplicidad, aquí iteramos todas las filas:
             var rs = await session.ExecuteAsync(new SimpleStatement("SELECT * FROM users_by_id"));
             foreach (var row in rs)
             {
@@ -111,14 +109,36 @@ namespace UsersService.Repositories
             };
         }
 
-        public async Task<string?> GetEmailByIdAsync(Guid id)
+        public async Task UpdateAsync(User user)
         {
             var session = _sessionFactory.GetSession();
-            var stmt = session.Prepare("SELECT email FROM users_by_id WHERE id_user = ?");
-            var result = await session.ExecuteAsync(stmt.Bind(id));
-            var row = result.FirstOrDefault();
-            return row?.GetValue<string>("email");
-        }
 
+            var cassandraDate = new LocalDate(user.DateOfBirth.Year, user.DateOfBirth.Month, user.DateOfBirth.Day);
+
+            var stmt = session.Prepare(@"
+        UPDATE users_by_id SET 
+            first_name = ?, 
+            last_name = ?, 
+            phone_number = ?, 
+            gender = ?, 
+            country = ?, 
+            city = ?, 
+            updated_at = ?
+        WHERE id_user = ?
+    ");
+
+            var bound = stmt.Bind(
+                user.FirstName,
+                user.LastName,
+                user.PhoneNumber,
+                user.Gender,
+                user.Country,
+                user.City,
+                user.UpdatedAt,
+                user.IdUser
+            );
+
+            await session.ExecuteAsync(bound);
+        }
     }
 }

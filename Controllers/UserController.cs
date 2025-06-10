@@ -1,18 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using UsersService.Dtos;
 using UsersService.Repositories;
 
 [ApiController]
 [Route("user")]
 public class UserController : ControllerBase
 {
-    private readonly UserRepository _userRepository;
-    public UserController(UserRepository userRepository)
-    {
-        _userRepository = userRepository;
-    }
-    
     [HttpGet("me")]
     [Authorize]
     public IActionResult GetMe()
@@ -31,15 +26,41 @@ public class UserController : ControllerBase
         });
     }
 
-    [HttpGet("{id}/email")]
-    public async Task<IActionResult> GetEmailById(Guid id)
+    [HttpPut("profile")]
+    [Authorize]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserRequest request)
     {
-        var email = await _userRepository.GetEmailByIdAsync(id);
-        if (email == null)
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
         {
-            return NotFound(new { message = "Usuario no encontrado." });
+            return Unauthorized(new { message = "Token inválido" });
         }
 
-        return Ok(new { email });
+        var userId = Guid.Parse(userIdClaim.Value);
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { message = "Usuario no encontrado" });
+        }
+
+        // Actualizamos los campos permitidos
+        user.FirstName = request.FirstName ?? user.FirstName;
+        user.LastName = request.LastName ?? user.LastName;
+        user.PhoneNumber = request.PhoneNumber ?? user.PhoneNumber;
+        user.Gender = request.Gender ?? user.Gender;
+        user.Country = request.Country ?? user.Country;
+        user.City = request.City ?? user.City;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _userRepository.UpdateAsync(user);
+
+        return Ok(new { message = "Perfil actualizado con éxito" });
+    }
+
+    private readonly UserRepository _userRepository;
+
+    public UserController(UserRepository userRepository)
+    {
+        _userRepository = userRepository;
     }
 }
