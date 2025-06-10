@@ -140,5 +140,15 @@ namespace UsersService.Repositories
 
             await session.ExecuteAsync(bound);
         }
+
+        public async Task<string?> GetEmailByIdAsync(Guid id)
+        {
+            var session = _sessionFactory.GetSession();
+            var stmt = session.Prepare("SELECT email FROM users_by_id WHERE id_user = ?");
+            var result = await session.ExecuteAsync(stmt.Bind(id));
+            var row = result.FirstOrDefault();
+            return row?.GetValue<string>("email");
+        }
+
     }
 }

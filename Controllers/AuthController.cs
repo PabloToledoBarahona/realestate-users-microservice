@@ -67,37 +67,6 @@ public async Task<IActionResult> Register([FromBody] RegisterRequest request)
             }
         });
     }
-
-    [HttpGet("profile")]
-    [Authorize]
-    public async Task<IActionResult> GetProfile()
-    {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier); // sub en el token
-        if (userIdClaim == null)
-        {
-            return Unauthorized(new { message = "Token inválido" });
-        }
-
-        var userId = Guid.Parse(userIdClaim.Value);
-        var user = await _userRepository.GetByIdAsync(userId);
-        if (user == null)
-        {
-            return NotFound(new { message = "Usuario no encontrado" });
-        }
-
-        return Ok(new
-        {
-            user.IdUser,
-            user.FirstName,
-            user.LastName,
-            user.Email,
-            user.PhoneNumber,
-            user.DateOfBirth,
-            user.Gender,
-            user.Country,
-            user.City
-        });
-    }
 }
 
 public class LoginRequest

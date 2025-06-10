@@ -26,6 +26,49 @@ public class UserController : ControllerBase
         });
     }
 
+    [HttpGet("{id}/email")]
+    public async Task<IActionResult> GetEmailById(Guid id)
+    {
+        var email = await _userRepository.GetEmailByIdAsync(id);
+        if (email == null)
+        {
+            return NotFound(new { message = "Usuario no encontrado." });
+        }
+
+        return Ok(new { email });
+    }
+
+    [HttpGet("profile")]
+    [Authorize]
+    public async Task<IActionResult> GetProfile()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier); // sub en el token
+        if (userIdClaim == null)
+        {
+            return Unauthorized(new { message = "Token inválido" });
+        }
+
+        var userId = Guid.Parse(userIdClaim.Value);
+        var user = await _userRepository.GetByIdAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { message = "Usuario no encontrado" });
+        }
+
+        return Ok(new
+        {
+            user.IdUser,
+            user.FirstName,
+            user.LastName,
+            user.Email,
+            user.PhoneNumber,
+            user.DateOfBirth,
+            user.Gender,
+            user.Country,
+            user.City
+        });
+    }
+
     [HttpPut("profile")]
     [Authorize]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserRequest request)
